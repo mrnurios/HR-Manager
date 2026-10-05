@@ -352,7 +352,7 @@
 					<button v-if="EditMode" 
 						:disabled="isSubmitting"
 						type="button"
-						@click="router.push({name: 'view-personnel',params: {id:route.params.id}})"
+						@click="router.back()"
 						class="disabled:opacity-50 enabled:active:scale-95 w-40 h-15 bg-zinc-800 border border-slate-200/15 enabled:hover:bg-zinc-400/50 rounded-2xl enabled:cursor-pointer">
 						Cancel
 					</button>
