@@ -2,8 +2,8 @@
     // 1. Declare the props explicitly
     defineProps({
         modelValue: {
-            type: String,
-            default: ''
+            type: [String, Number],
+            default: null
         },
         id: {
             type: String,
@@ -19,7 +19,6 @@
     const emit = defineEmits(['update:modelValue'])
 </script>
 
-
 <template>
     <div class="relative w-fit">
         <select 
@@ -27,7 +26,7 @@
             :id="id"
             :required="isRequired"
             :value="modelValue"
-            class="block form-input-style appearance-none pr-8  cursor-pointer"
+            class="block form-input-style appearance-none pr-8 cursor-pointer"
             @change="$emit('update:modelValue', $event.target.value)"
         >
             <slot/>

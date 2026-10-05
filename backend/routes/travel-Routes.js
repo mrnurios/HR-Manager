@@ -26,10 +26,7 @@ router.get('/page/:page', async (req, res) => {
 
 router.post("/create-travel", async (req, res) => {
     const {
-        date_received,
-        name,
-        firstname,
-        lastname,
+        personnel_uuid,
         department,
         inclusive_dates,
         purpose,
@@ -37,13 +34,11 @@ router.post("/create-travel", async (req, res) => {
     } = req.body;
 
     try {
+
         const values = [
-            date_received,
-            `${firstname} ${lastname}`,
-            firstname,
-            lastname,
+            personnel_uuid,
             department,
-            inclusive_dates.map(r => `[${r.from},${r.to}]`),
+            inclusive_dates.map(r => `[${r.start},${r.end}]`),
             purpose,
             whereto
         ];
@@ -64,60 +59,31 @@ router.post("/create-travel", async (req, res) => {
     }
 });
 
-router.patch("/update-travel/status", async (req, res) => {
-    const {
-        serial_no,
-        status
-    } = req.body;
+router.patch("/patch/:id", async (req, res) => {
+    const { id } = req.params;
+    const { data } = req.body;
 
     try {
-        const values = [
-            serial_no,
-            status
-        ];
+        const fields = Object.keys(data);
 
-        const result = await API.updateTravelEntryStatus(values);
+        if (fields.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: "No fields to update"
+            });
+        }
 
-        res.json({
-            success: true,
-            row: result.rows[0]
-        });
-    } catch (err) {
-        console.log(err)
-        
-        res.status(500).json({
-            success: false,
-            message: err.message
-        });
-    }
-});
+        const [date_year, travel_no] = id.split('-')
+        if (data.inclusive_dates) data.inclusive_dates = data.inclusive_dates.map(r => `[${r.start},${r.end}]`)
 
-router.put("/update-travel", async (req, res) => {
-    const {
-        serial_no,
-        date_received,
-        department,
-        firstname,
-        lastname,
-        inclusive_dates,
-        purpose,
-        whereto
-    } = req.body;
+        const result = await API.updateTravelEntry(date_year,travel_no,data);
 
-    try {
-        const values = [
-            serial_no,
-            date_received,
-            `${firstname} ${lastname}`,
-            firstname,
-            lastname,
-            department,
-            inclusive_dates.map(r => `[${r.from},${r.to}]`),
-            purpose,
-            whereto
-        ];
-
-        const result = await API.updateTravelEntry(values);
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                error: "Travel entry not found"
+            });
+        }
 
         res.json({
             success: true,

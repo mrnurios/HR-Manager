@@ -1,7 +1,7 @@
 <template>
     <Card v-bind="{ ...attrs, class: mergedClasses }" class="flex flex-col justify-center items-center">
-        <div class="inline-flex items-center flex-1">
-            <span class="whitespace-pre-line">{{ message }}</span>
+        <div class="flex-1">
+            <slot />
         </div>
         <button 
             type="button"
@@ -24,10 +24,6 @@
     );
 
     defineProps({
-        message: {
-            type: String,
-            default: 'Default feedback message'
-        },
         buttondescription: {
             type: String,
             default: 'OK'

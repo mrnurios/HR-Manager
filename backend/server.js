@@ -2,6 +2,8 @@ import express from 'express';
 import { startListener } from './db/listener.js';
 import travelrouter from './routes/travel-Routes.js';
 import personnelrouter from './routes/personnel-Routes.js';
+import passSliprouter from './routes/pass-slip-Routes.js';
+import departmentrouter from './routes/department-Routes.js';
 import cors from 'cors';
 
 import fs from 'node:fs';
@@ -29,7 +31,9 @@ async function init(){
     app.use(cors());
     app.use(express.json());
     app.use('/api/travel-entries', travelrouter);
-    app.use('/api/departments', personnelrouter);
+    app.use('/api/personnel', personnelrouter);
+    app.use('/api/pass-slip', passSliprouter);
+    app.use('/api/department', departmentrouter);
 
     app.get('/api/travel-stream', (req, res) => {
         res.setHeader('Content-Type', 'text/event-stream');

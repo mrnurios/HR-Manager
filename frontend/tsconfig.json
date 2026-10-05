@@ -1,0 +1,11 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "paths": {
+      // 2. Ensure your path mappings explicitly start with a relative dot "./"
+      "@/*": ["./src/*"] 
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
+}
