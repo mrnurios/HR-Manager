@@ -256,15 +256,6 @@
 				<hr class="border-t border-slate-200/20 my-4" />
 				<div class="flex gap-3 flex-wrap">
 					<div>
-						<label for="department" class="font-bold text-sm opacity-45 ml-3">DEPARTMENT</label>
-						<FormSelect :disabled="isSubmitting" id="department" v-model="profile.dep_id" class="capitalize w-72">
-							<option value="" disabled selected>Select Department</option>
-							<option v-for="d in personnelStore.allDepartments" :key="d.dep_id" :value="d.dep_id">
-								{{ d.dep_code }} - {{ d.dep_name }}
-							</option>
-						</FormSelect>
-					</div>
-					<div>
 						<label for="eligibility" class="font-bold text-sm opacity-45 ml-3">ELIGIBILITY LEVEL</label>
 		
 						<FormSelect id="eligibility" v-model="profile.eligibility" class="uppercase">
@@ -275,51 +266,79 @@
 							<option value="executive">3rd level eligibity - Executive</option>
 						</FormSelect>
 					</div>
-					<div>
-						<label for="perconnel_type" class="font-bold text-sm opacity-45 ml-3">PERSONNEL TYPE</label>
-						<FormSelect id="perconnel_type" v-model="profile.personnel_type" class="uppercase">
-							<option value="" disabled selected>Select employment type</option>
-							<option value="joborder">Job Order</option>
-							<option value="permanent">Permanent</option>
-							<option value="elective">Elective</option>
-							<option value="coterminous">Coterminous</option>
-						</FormSelect>
-					</div>
-					<div class="mx-auto">
-						<span class="font-bold text-sm opacity-45 ml-3">DATES OF APPOINTMENT</span>
-						<div class="border border-slate-200/15 min-h-20 rounded-2xl">
-							<table class="border-separate border-spacing-y-1 m-2 md:m-4">
+					<div class="mx-auto min-w-0 p-4 border border-slate-200/15 overflow-clip rounded-2xl">
+						<div class="min-h-20 max-w-full flex flex-col items-center overflow-auto">
+							<span class="font-bold text-sm opacity-45">APPOINTMENTS</span>
+							<table class="border-separate border-spacing-y-1 w-full">
 								<thead>
 									<tr>
-										<th class="w-5"></th>
+										<th class="w-5">No.</th>
 										<th class="w-60 text-center text-sm">START</th>
 										<th class="w-60 text-center text-sm">END</th>
+										<th class="text-center text-sm">Type</th>
+										<th class="text-center text-sm">Department</th>
+										<th class="w-60 text-center text-sm">Position</th>
 									</tr>
 								</thead>
 								<tbody>
-									<template v-for="(daterange,index) in profile.appointmentdates" :key="index">
+									<template v-for="(employment,index) in EmploymentHistory" :key="index">
 										<tr>
 											<td>
 												{{ index + 1 }}.
 											</td>
-											<td class="text-center px-2 h-15">
-												<input type="date" v-model="daterange.start"
+											<td class="text-center px-1 h-15">
+												<input type="date" v-model="employment.appointment_date.start"
 													class="form-input-style
 													scheme-dark w-full
 													[&::-webkit-calendar-picker-indicator]:cursor-pointer
 													[&::-webkit-calendar-picker-indicator]:opacity-80"/>
 											</td>
-											<td class="text-center px-2 h-15">
-												<input type="date" v-model="daterange.end"
+											<td class="text-center px-1 h-15">
+												<input type="date" v-model="employment.appointment_date.end"
 													class="form-input-style w-full
 													scheme-dark
 													[&::-webkit-calendar-picker-indicator]:cursor-pointer
 													[&::-webkit-calendar-picker-indicator]:opacity-80"/>
 											</td>
+											<td class="text-center px-1 h-15">
+												<FormSelect id="perconnel_type" v-model="employment.job_type" class="uppercase">
+													<option value="" disabled selected>Select type</option>
+													<option value="joborder">Job Order</option>
+													<option value="permanent">Permanent</option>
+													<option value="elective">Elective</option>
+													<option value="coterminous">Coterminous</option>
+												</FormSelect>
+											</td>
+											<td class="text-center px-1 h-15">
+												<select 
+													class="block form-input-style appearance-none pr-8 cursor-pointer"
+													v-model="employment.dep_id"
+													id="department"
+												>
+													<option value=null disabled selected>Select Department</option>
+													<option v-for="d in personnelStore.allDepartments" :key="d.dep_id" :value="d.dep_id">
+														{{ d.dep_code }}
+													</option>
+												</select>
+												<div class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+													<svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+														<path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+													</svg>
+												</div>
+											</td>
+											<td class="text-center px-1 h-15">
+												<input type="text" v-model="employment.job_position"
+													placeholder="Input position..."
+													class="form-input-style w-full
+													scheme-dark
+													[&::-webkit-calendar-picker-indicator]:cursor-pointer
+													[&::-webkit-calendar-picker-indicator]:opacity-80"
+													@input="employment.job_position = $event.target.value === '' ? null : $event.target.value"/>
+											</td>
 											<td class="flex justify-center items-center h-15">
 												<button type="button" 
 													title="Delete"
-													@click="profile.appointmentdates.splice(index, 1)"
+													@click="profile.employment_history.splice(index, 1)"
 													class="items-center bg-red-400 hover:bg-red-500 p-3 rounded-lg cursor-pointer">
 													<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
 														<path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
@@ -331,10 +350,19 @@
 									<tr>
 										<td></td>
 										<td></td>
-										<td class="opacity-30 text-right pr-5">Add appointment date</td>
+										<td></td>
+										<td></td>
+										<td></td>
+										<td class="opacity-30 text-right pr-5">Add new appointment</td>
 										<td class="flex justify-center items-center h-15">
 											<button type="button"
-												@click="profile.appointmentdates.push({start: '',end: ''})"
+												@click="profile.employment_history.push(
+													{
+														appointment_date:{start: '',end: ''},
+														job_type:0,
+														job_position:''
+													}
+												)"
 												title="Add appointment date"
 												class="bg-amber-200 hover:bg-amber-300 p-3 rounded-lg cursor-pointer text-zinc-700">
 												<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
@@ -356,7 +384,7 @@
 						class="disabled:opacity-50 enabled:active:scale-95 w-40 h-15 bg-zinc-800 border border-slate-200/15 enabled:hover:bg-zinc-400/50 rounded-2xl enabled:cursor-pointer">
 						Cancel
 					</button>
-					<button :disabled="Object.keys(dirtyFields).length === 0 || isSubmitting" type="submit" class="disabled:opacity-50 w-40 h-15 bg-zinc-800 border border-slate-200/15 enabled:hover:bg-zinc-400/50 rounded-2xl enabled:cursor-pointer enabled:active:scale-95">{{ EditMode ? 'Save Update' : 'Submit' }}</button>
+					<button :disabled="!EnableUpdate" type="submit" class="disabled:opacity-50 w-40 h-15 bg-zinc-800 border border-slate-200/15 enabled:hover:bg-zinc-400/50 rounded-2xl enabled:cursor-pointer enabled:active:scale-95">{{ EditMode ? 'Save Update' : 'Submit' }}</button>
 				</div>
 			</form>
 			<div v-if="showfeedback" class="absolute inset-0 w-full h-full backdrop-blur-md bg-zinc-900/10 flex items-center">
@@ -367,7 +395,7 @@
 </template>
 
 <script setup>
-	import { ref,computed,watch,onMounted,toRaw } from 'vue'
+	import { ref,computed,watch,onMounted,toRaw,reactive } from 'vue'
 	import { useRoute,useRouter } from 'vue-router';
   	import FormSelect from '../../components/FormDropdown.vue'
   	import Card from '../../components/Card.vue'
@@ -375,30 +403,53 @@
 	import * as API from '../../services/api.js'
     import { usePersonnelStore } from '../../stores/stores.js'
 	import * as tools from '../../utils/format.js'
+	
+	const dirtyFieldsArray = computed(() => {
+		const dirty = reactive([])
+
+		watch(
+			EmploymentHistory,
+			() => {
+				dirty.length = 0
+
+				if (!originalEmploymentHistory.value) return
+
+				EmploymentHistory.value.forEach((item, index) => {
+					const fields = {}
+					for (const key in fields) {
+						delete fields[key]
+					}
+
+					for (const key in item) {
+						if (
+							JSON.stringify(item[key]) !==
+							JSON.stringify(originalEmploymentHistory.value[index][key])
+						) {
+							fields[key] = item[key]
+						}
+					}
+
+					if (Object.keys(fields).length > 0) {
+						fields.id = originalEmploymentHistory.value[index].id
+						dirty.push(fields)
+					}
+				})
+
+			},
+			{ deep: true, immediate: true }
+		)
+
+		return dirty
+	})
 
 	const route = useRoute();
 	const router = useRouter()
-	// const link = computed(() => {
-	// 	if (route.params.id) {
-	// 		EditMode.value = true;
-	// 		return {
-	// 			name: 'view-personnel',
-	// 			params: { id: route.params.id }
-	// 		};
-	// 	}else{
-	// 		EditMode.value = false;
 
-	// 		return {
-	// 			name: 'home-personnel'
-	// 		};
-	// 	}
-	// });
-
-	// const msgBox = ref(null)
 	const ErrorOccured = ref(false);
 	const EditMode = ref(false);
 	const profileInfo = ref({})
 	const originalProfile = ref({})
+	const originalEmploymentHistory = ref({})
 	const personnelStore = usePersonnelStore()
 
 	onMounted(async () => {
@@ -407,6 +458,9 @@
 		}
 
 		if (route.name === 'edit-personnel' && route.params.id){
+			EditMode.value = true;
+			isSubmitting.value = true;
+
 			await personnelStore.selectPersonnel(route.params.id);
 
 			profileInfo.value = {...personnelStore.selectedPersonnel}
@@ -438,15 +492,39 @@
 				additionaladd: profileInfo.value.other_address,
 				eligibility: profileInfo.value.eligibility_level,
 				personnel_type: profileInfo.value.personnel_type,
-				dep_id: profileInfo.value.dep_id,
-				appointmentdates: profileInfo.value.appointment_dates.map(([start, end]) => ({start,end}))
+				dep_id: profileInfo.value.dep_id
 			};
+
+			originalEmploymentHistory.value = profileInfo.value.employment_history.map(history => {
+										const [start, end] = history.appointment_date
+
+										return {
+											...history,
+											appointment_date: { start, end }
+										}
+									})
+
+			EmploymentHistory.value = profileInfo.value.employment_history.map(history => {
+										const [start, end] = history.appointment_date
+
+										return {
+											...history,
+											appointment_date: { start, end }
+										}
+									})
+			
 
 			sameAddress.value = (profile.value.birthaddress === '')
 
-			originalProfile.value = structuredClone(toRaw(profile.value));
+			originalEmploymentHistory.value = JSON.parse(
+				JSON.stringify(EmploymentHistory.value)
+			)
 
-			EditMode.value = true;
+			originalProfile.value = JSON.parse(
+				JSON.stringify(toRaw(profile.value))
+			)
+
+			isSubmitting.value = false;
 		}
 	})
 
@@ -481,32 +559,58 @@
 		ErrorOccured.value = false;
 
 		try {
-			if (sameAddress.value){
-				const birthadd = []
-				if (profile.value.selectedPurok === 'Other') {
-					birthadd.push(profile.value.specifyPurok.trim())
-				}else{
-					birthadd.push(profile.value.selectedPurok.trim())
+			if (Object.keys(dirtyFields).length > 0) {
+					if (sameAddress.value){
+					const birthadd = []
+					if (profile.value.selectedPurok === 'Other') {
+						birthadd.push(profile.value.specifyPurok.trim())
+					}else{
+						birthadd.push(profile.value.selectedPurok.trim())
+					}
+					birthadd.push(profile.value.selectedBarangay)
+					birthadd.push('Lugait, Misamis Oriental')
+					profile.value.birthaddress = birthadd.join(', ')
 				}
-				birthadd.push(profile.value.selectedBarangay)
-				birthadd.push('Lugait, Misamis Oriental')
-				profile.value.birthaddress = birthadd.join(', ')
+
+				const response = await API.patchPersonnelByUUID(personnelStore.selectedPersonnel.personnel_uuid,JSON.parse(JSON.stringify(dirtyFields)));
+				
+				if (response.success){
+					feedbackmsg.value = 'Profile Updated Successfully!';
+					personnelStore.selectedPersonnel = response.data[0]
+					const indexpos = personnelStore.allPersonnel.findIndex(
+						person => person.personnel_uuid === personnelStore.selectedPersonnel.personnel_uuid
+					)
+
+					if (indexpos >= 0 ){
+						personnelStore.allPersonnel[indexpos] = response.data.rows[0]
+					}
+				}else{
+					feedbackmsg.value = 'Error! Failed Updating Profile!'
+				}
 			}
+			
+			if( dirtyFieldsArray.value.length > 0) {
+				const values = JSON.parse(JSON.stringify(dirtyFieldsArray.value))
+				const response = await Promise.all(
+					values.map(fields => {
+						const id = fields.id
+						delete fields.id
 
-			const response = await API.patchPersonnelByUUID(personnelStore.selectedPersonnel.personnel_uuid,JSON.parse(JSON.stringify(dirtyFields)));
-
-			if (response.success){
-				feedbackmsg.value = 'Profile Updated Successfully!';
-				personnelStore.selectedPersonnel = response.data.rows[0]
-				const indexpos = personnelStore.allPersonnel.findIndex(
-					person => person.personnel_uuid === personnelStore.selectedPersonnel.personnel_uuid
+						return API.patchPersonnelEmploymentHistory(id, fields)
+					})
 				)
 
-				if (indexpos >= 0 ){
-					personnelStore.allPersonnel[indexpos] = response.data.rows[0]
-				}
-			}else{
-				feedbackmsg.value = 'Error! Failed Updating Profile!'
+				response.forEach(query => {
+					if (query.success){
+						const indexpos = personnelStore.allPersonnel.findIndex(
+							person => person.personnel_uuid === personnelStore.selectedPersonnel.personnel_uuid
+						)
+
+						if (indexpos >= 0 ){
+							personnelStore.allPersonnel[indexpos].employment_history = query.data
+						}
+					}
+				})
 			}
 		} catch (error) {
 			console.error('Server error message:', error.response?.data?.message)
@@ -527,6 +631,8 @@
 			return start.trim() !== '' && end.trim() !== ''
 		})
 	};
+
+	const EmploymentHistory = ref([])
 
 	const profile = ref({
 		fname: null,
@@ -549,11 +655,12 @@
 		additionaladd: null,
 		eligibility: null,
 		personnel_type: null,
-		dep_id: null,
-		appointmentdates:[]
+		dep_id: null
 	})
 
 	const clearProfile = () => {
+		EmploymentHistory.value = []
+
 		profile.value = {
 			fname: null,
 			mname: null,
@@ -575,8 +682,7 @@
 			additionaladd: null,
 			eligibility: null,
 			personnel_type: null,
-			dep_id: null,
-			appointmentdates:[]
+			dep_id: null
 		};
 	};
 
@@ -641,4 +747,7 @@
 	};
 	const showfeedback = ref(false)
 
+	const EnableUpdate = computed(()=>{
+		return Object.keys(dirtyFields).length > 0 || dirtyFieldsArray.value.length > 0 || !isSubmitting
+	})
 </script>

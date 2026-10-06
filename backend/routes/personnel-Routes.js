@@ -7,7 +7,9 @@ router.get('/', async (req, res) => {
     try {
         const data = await API.getAllPersonnel();
         data.forEach(values => {
-            values.appointment_dates = daterangeStrtoArray(values.appointment_dates);
+            values.employment_history.forEach(e => {
+                e.appointment_date = daterangeStrtoArray(e.appointment_date)[0];
+            })
             setActiveStatus(values);
         })
 
@@ -27,7 +29,9 @@ router.get("/search", async (req, res) => {
         const searchQuery = req.query.q || ""; 
         const result = await API.searchPersonnel(searchQuery);
         result.rows.forEach(values => {
-            values.appointment_dates = daterangeStrtoArray(values.appointment_dates);
+            values.employment_history.forEach(e => {
+                e.appointment_date = daterangeStrtoArray(e.appointment_date)[0];
+            })
             setActiveStatus(values);
         })
 
@@ -59,11 +63,11 @@ router.get('/gettravelentriesandpassslips',async (req, res) => {
 
         const result = await API.getPersonnelTravelEntriesAndPasslips(startDate,endDate);
 
-        // result.rows.forEach(values => {
-        //     values.all_travel_arrays.forEach(dates =>{
-        //         dates = daterangeStrtoArray(dates);
-        //     })
-        // })
+        result.rows.forEach(values => {
+            values.all_travel_arrays.forEach(dates =>{
+                dates = daterangeStrtoArray(dates);
+            })
+        })
 
         res.json({
             success: true,
@@ -83,7 +87,9 @@ router.get('/:id',async (req,res)=>{
     try {
         const { id } = req.params;
         const data = await API.getPersonnelByUUID(id);
-        data[0].appointment_dates = daterangeStrtoArray(data[0].appointment_dates);
+        data[0].employment_history.forEach(e => {
+            e.appointment_date = daterangeStrtoArray(e.appointment_date)[0];
+        })
         setActiveStatus(data[0]);
         res.json(data);
     } catch (err) {
@@ -182,10 +188,6 @@ router.patch('/:id',async (req, res) => {
     const { id } = req.params
     const data = req.body
 
-    if (!data || Object.keys(data).length === 0) {
-        throw new Error('No valid fields to update')
-    }
-
     try {
         const fieldMap = {
             fname: 'first_name',
@@ -207,9 +209,6 @@ router.patch('/:id',async (req, res) => {
             specifyPurok: 'other_purok',
             additionaladd: 'other_address',
             eligibility: 'eligibility_level',
-            personnel_type: 'personnel_type',
-            dep_id: 'dep_id',
-            appointmentdates: 'appointment_dates'
         }
 
         const updates = {}
@@ -220,28 +219,11 @@ router.patch('/:id',async (req, res) => {
             }
         }
 
-        if (updates.appointment_dates){
-            updates.appointment_dates = updates.appointment_dates
-                .filter(({ start, end }) => start || end) // keep rows with at least one date
-                .map(({ start, end }) => {
-                    if (start && end) {
-                    return `[${start},${end}]`;
-                    }
-
-                    if (start) {
-                        return `[${start},)`; // open-ended
-                    }
-
-                    return `(,${end}]`; // open-beginning
-            });
-        }
-
         const result = await API.patchPersonnel(id,updates)
-        result.rows[0].appointment_dates = daterangeStrtoArray(result.rows[0].appointment_dates);
         setActiveStatus(result.rows[0]);
         res.json({
             success: true,
-            data: result
+            data: result.rows
         });
     } catch (err) {
         console.log(err)
@@ -281,6 +263,43 @@ router.delete('/:id', async (req, res) => {
         });
     }
 });
+
+router.patch('/employment/:id',async (req, res) => {
+    const { id } = req.params
+    const data = req.body
+
+    try{
+        let personnelemploymentupdateresult = null
+        if (data.appointment_date){
+            const { start, end } = data.appointment_date
+
+            if (start && end) {
+                data.appointment_date = `[${start},${end}]`
+            } else if (start) {
+                data.appointment_date = `[${start},)`
+            } else if (end) {
+                data.appointment_date = `(,${end}]`
+            } else {
+                data.appointment_date = null
+            }
+        }
+
+        const result = await API.patchPersonnelEmploymentHistory(id,data)
+        result.rows[0].appointment_date = daterangeStrtoArray(result.rows[0].appointment_date)[0];
+        res.json({
+            success: true,
+            data: result.rows[0]
+        });
+    } catch (err) {
+        console.log(err)
+        
+        res.status(500).json({
+            success: false,
+            message: err.message
+        });
+    }
+    
+})
 
 // Formats psql date range string to array and sort
 export function daterangeStrtoArray(dateStr) {

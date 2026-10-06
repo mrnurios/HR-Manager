@@ -1,11 +1,42 @@
 import { pool } from '../db/db.js';
 
+const getemploymenttype = `
+    (
+        SELECT eh.job_type
+        FROM employment_history eh
+        WHERE eh.personnel_uuid = p.personnel_uuid
+        ORDER BY
+            upper(eh.appointment_date) IS NULL DESC,
+            upper(eh.appointment_date) DESC
+        LIMIT 1
+    ) AS personnel_type
+`
+
 export async function getAllPersonnel() {
     const result = await pool.query(
         `
-        SELECT *
-        FROM personnel
-        ORDER BY last_name ASC, first_name ASC;
+        SELECT 
+            p.*,
+            COALESCE(
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', eh.id,
+                            'dep_id', eh.dep_id,
+                            'appointment_date', eh.appointment_date,
+                            'job_type', eh.job_type,
+                            'job_position', eh.job_position
+                        )
+                        ORDER BY eh.id
+                    )
+                    FROM employment_history eh
+                    WHERE eh.personnel_uuid = p.personnel_uuid
+                ),
+                '[]'::json
+            ) AS employment_history,
+            ${getemploymenttype}
+        FROM personnel p
+        ORDER BY p.last_name ASC, p.first_name ASC;
         `
     );
 
@@ -13,8 +44,31 @@ export async function getAllPersonnel() {
 }
 
 export async function getPersonnelByUUID(id) {
-    const result = await pool.query(
-        `SELECT * FROM personnel WHERE personnel_uuid = $1`,
+    const sql = `
+        SELECT 
+            p.*,
+            COALESCE(
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', eh.id,
+                            'dep_id', eh.dep_id,
+                            'appointment_date', eh.appointment_date,
+                            'job_type', eh.job_type,
+                            'job_position', eh.job_position
+                        )
+                        ORDER BY eh.id
+                    )
+                    FROM employment_history eh
+                    WHERE eh.personnel_uuid = p.personnel_uuid
+                ),
+                '[]'::json
+            ) AS employment_history,
+            ${getemploymenttype}
+        FROM personnel p
+        WHERE p.personnel_uuid = $1
+    `
+    const result = await pool.query(sql,
         [id]
     )
     return result.rows;
@@ -78,6 +132,31 @@ export async function patchPersonnel(uuid,updates){
     return await pool.query(sql, values)
 }
 
+export async function patchPersonnelEmploymentHistory(id,updates){
+    const fields = Object.keys(updates)
+
+    if (fields.length === 0) {
+        throw new Error('No valid fields to update')
+    }
+
+    const values = Object.values(updates)
+
+    const setClause = fields
+        .map((field, index) => `"${field}" = $${index + 1}`)
+        .join(', ')
+
+    values.push(id)
+
+    const sql = `
+        UPDATE employment_history
+        SET ${setClause}
+        WHERE id = $${values.length}
+        RETURNING *;
+    `
+
+    return await pool.query(sql, values)
+}
+
 export async function searchPersonnel(searchQuery) {
     const terms = searchQuery.trim().split(/\s+/).filter(term => term.length > 0);
 
@@ -98,8 +177,6 @@ export async function searchPersonnel(searchQuery) {
             'other_address',
             'other_purok',
             'contact_number',
-            'd.dep_code',
-            'd.dep_name',
             'birthplace',
             'sex::text'
         ];
@@ -122,9 +199,27 @@ export async function searchPersonnel(searchQuery) {
         const filterSql = conditionGroups.join(' AND ');
 
         const dataSql = `
-            SELECT *
+            SELECT 
+                p.*,
+                COALESCE(
+                    (
+                        SELECT json_agg(
+                            json_build_object(
+                                'id', eh.id,
+                                'dep_id', eh.dep_id,
+                                'appointment_date', eh.appointment_date,
+                                'job_type', eh.job_type,
+                                'job_position', eh.job_position
+                            )
+                            ORDER BY eh.id
+                        )
+                        FROM employment_history eh
+                        WHERE eh.personnel_uuid = p.personnel_uuid
+                    ),
+                    '[]'::json
+                ) AS employment_history,
+                ${getemploymenttype}
             FROM personnel p
-            LEFT JOIN departments d ON p.dep_id = d.dep_id
             WHERE ${filterSql}
             ORDER BY last_name ASC, first_name ASC;
         `;
@@ -168,7 +263,8 @@ export async function getPersonnelTravelEntriesAndPasslips(startDate,endDate){
         SELECT 
             p.personnel_uuid,
             COALESCE(t.all_travel_arrays, '[]'::jsonb) AS all_travel_arrays,
-            COALESCE(s.all_pass_slips, '[]'::jsonb) AS all_pass_slips
+            COALESCE(s.all_pass_slips, '[]'::jsonb) AS all_pass_slips,
+            ${getemploymenttype}
         FROM personnel p
         LEFT JOIN monthly_travel t 
             ON p.personnel_uuid = t.personnel_uuid

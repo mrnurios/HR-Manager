@@ -93,3 +93,40 @@ export const dirtyFields = (newValues, originalValues) => {
 
     return dirty
 }
+
+export const dirtyFieldsArray = (newValues, originalValues) => {
+    const dirty = reactive([])
+
+    watch(
+        newValues,
+        () => {
+            dirty.length = 0
+
+            if (!originalValues.value) return
+
+            newValues.value.forEach((item, index) => {
+                const fields = {}
+                for (const key in fields) {
+                    delete fields[key]
+                }
+
+                for (const key in item) {
+                    if (
+                        JSON.stringify(item[key]) !==
+                        JSON.stringify(originalValues.value[index][key])
+                    ) {
+                        fields[key] = item[key]
+                    }
+                }
+
+                if (Object.keys(fields).length > 0) dirty.push(fields)
+            })
+
+            console.log(newValues.value,originalValues.value)
+            // console.log(dirty)
+        },
+        { deep: true, immediate: true }
+    )
+
+    return dirty
+}

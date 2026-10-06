@@ -1,5 +1,4 @@
 <script setup>
-    // 1. Declare the props explicitly
     defineProps({
         modelValue: {
             type: [String, Number],
@@ -12,11 +11,19 @@
         isRequired: {
             type: Boolean,
             default: false
-        } 
+        }
     })
 
-    // 2. Declare the update event for v-model
     const emit = defineEmits(['update:modelValue'])
+
+    function updateValue(event) {
+        const option = event.target.selectedOptions[0]
+
+        emit(
+            'update:modelValue',
+            option?.__value ?? event.target.value
+        )
+    }
 </script>
 
 <template>
@@ -27,7 +34,7 @@
             :required="isRequired"
             :value="modelValue"
             class="block form-input-style appearance-none pr-8 cursor-pointer"
-            @change="$emit('update:modelValue', $event.target.value)"
+            @change="updateValue"
         >
             <slot/>
         </select>

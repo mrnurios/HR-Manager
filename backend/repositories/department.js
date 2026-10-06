@@ -7,9 +7,14 @@ export async function getAllDepartments() {
                 d.dep_id,
                 d.dep_code,
                 d.dep_name,
-                COUNT(p.dep_id) AS total_references
+                COUNT(eh.dep_id) AS total_references
             FROM departments d
-            LEFT JOIN personnel p ON d.dep_id = p.dep_id
+            LEFT JOIN employment_history eh
+                ON d.dep_id = eh.dep_id 
+                AND (
+                    upper(eh.appointment_date) IS NULL
+                    OR upper(eh.appointment_date) >= CURRENT_DATE
+                )
             GROUP BY d.dep_id
             ORDER BY d.dep_code, d.dep_name;
         `
@@ -52,7 +57,12 @@ export async function updateDepartment(dep_id,data) {
             ud.*,
             COUNT(p.dep_id) AS total_references
         FROM updated_department ud
-        LEFT JOIN personnel p ON ud.dep_id = p.dep_id
+        LEFT JOIN employment_history eh
+                ON d.dep_id = eh.dep_id 
+                AND (
+                    upper(eh.appointment_date) IS NULL
+                    OR upper(eh.appointment_date) >= CURRENT_DATE
+                )
         GROUP BY ud.dep_id,ud.dep_code,ud.dep_name;
     `;
     return pool.query(sql, values);

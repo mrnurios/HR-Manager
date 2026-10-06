@@ -78,6 +78,12 @@ export async function patchPersonnelByUUID(uuid,data) {
     return response.data;
 }
 
+export async function patchPersonnelEmploymentHistory(id,data) {
+    // console.log(id,data)
+    const response = await api.patch(`/personnel/employment/${id}`, data);
+    return response.data;
+}
+
 export async function getTravelEntries() {
     const response = await api.get(`/travel-entries`);
     return response.data;
