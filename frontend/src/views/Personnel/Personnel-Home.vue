@@ -97,7 +97,7 @@
 				@click="router.push({
 					name: 'view-personnel',
 					params: { id: `${row.personnel_uuid}`}
-				}); personnelStore.selectPersonnel(row)"
+				}); personnelStore.selectPersonnel(row.personnel_uuid)"
 
 				v-for="(row, index) in filteredPersonnel" 
 					:key="index"
@@ -133,7 +133,7 @@
 							class="rounded-sm p-1 border border-zinc-700 bg-zinc-800 hover:bg-zinc-700">
 							<HISolid.PencilIcon class="size-3"/>
 						</button>
-						<button title="Delete" @click.stop="deletePersonnel(row.personnel_uuid)"
+						<button title="Delete" @click.stop="personnelStore.deletePersonnel(row.personnel_uuid)"
 							class="bg-red-300 hover:bg-red-300/80 text-red-800 rounded-sm p-1">
 							<HISolid.TrashIcon class="size-3"/>
 						</button>
@@ -436,34 +436,5 @@
 				search: searchQuery.value || undefined, // undefined strips empty '?search=' clean from the URL
 			}
 		})
-	}
-
-	async function deletePersonnel(uuid) {
-		const confirmed = window.confirm(
-			'Are you sure you want to delete this personnel?'
-		)
-
-		if (!confirmed) return
-
-		try {
-			const result = await API.deletePersonnel(uuid)
-
-			if (result.success) {
-				const indexpos = personnelStore.allPersonnel.findIndex(
-					person => person.personnel_uuid === uuid
-				)
-
-				if (indexpos >= 0) {
-					personnelStore.allPersonnel.splice(indexpos, 1)
-				}
-
-				router.back()
-			}
-		} catch (error) {
-			console.error('Database connection failed:', error)
-			errorMessage.value =
-				error.response?.data?.message ||
-				'Could not connect to database server.'
-		}
 	}
 </script>
