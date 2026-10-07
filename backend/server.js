@@ -10,6 +10,9 @@ import 'dotenv/config';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const fs = require('fs');
+const path = require('path');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const envPath = path.join(__dirname, '.env'); 
@@ -17,13 +20,35 @@ const PORT = process.env.PORT || 5000;
 export let clients = [];
 
 function runfrontend(app){
-    const frontendBuildPath = path.join(__dirname, '../frontend/dist');
-    app.use(express.static(frontendBuildPath));
-    app.get('/*any', (req, res) => {
-        res.sendFile(path.join(frontendBuildPath, 'index.html'));
-    });
+    try {
+        // 1. Check if path exists and is a valid directory
+        const stats = fs.statSync(frontendBuildPath);
+        if (!stats.isDirectory()) {
+            throw new Error(`Path exists but is not a directory.`);
+        }
 
-    console.log(`Frontend Server running on port ${PORT}`);
+        // 2. Check if index.html is present and readable
+        fs.accessSync(indexPath, fs.constants.R_OK);
+        
+        // If it passes both, frontend is fully ready
+        app.use(express.static(frontendBuildPath));
+        app.get('/*any', (req, res) => {
+            res.sendFile(indexPath);
+        });
+
+        console.log(`Frontend Server running on port ${PORT}`);
+
+    } catch (error) {
+        console.error('❌ Frontend preparation check failed:');
+        console.error(`Target Path: ${frontendBuildPath}`);
+        console.error(`Reason: ${error.message}`);
+        console.error('👉 Please ensure you have run your frontend build command (e.g., npm run build).');
+        
+        // Optional: Gracefully handle the error or crash the process depending on your fallback strategy
+        app.get('*', (req, res) => {
+            res.status(503).send('Frontend is currently unavailable. Please try again later.');
+        });
+    }
 }
 
 async function init(){
