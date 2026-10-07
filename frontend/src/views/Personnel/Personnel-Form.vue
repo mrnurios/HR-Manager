@@ -287,7 +287,7 @@
 												{{ index + 1 }}.
 											</td>
 											<td class="text-center px-1 h-15">
-												<input type="date" v-model="employment.appointment_date.start"
+												<input required type="date" v-model="employment.appointment_date.start"
 													class="form-input-style
 													scheme-dark w-full
 													[&::-webkit-calendar-picker-indicator]:cursor-pointer
@@ -301,23 +301,36 @@
 													[&::-webkit-calendar-picker-indicator]:opacity-80"/>
 											</td>
 											<td class="text-center px-1 h-15">
-												<FormSelect id="perconnel_type" v-model="employment.job_type" class="uppercase">
-													<option value="" disabled selected>Select type</option>
-													<option value="joborder">Job Order</option>
-													<option value="permanent">Permanent</option>
-													<option value="elective">Elective</option>
-													<option value="coterminous">Coterminous</option>
-												</FormSelect>
+												<div class="relative w-fit">
+													<select 
+														required
+														class="block form-input-style appearance-none pr-8 cursor-pointer"
+														v-model="employment.job_type"
+														id="perconnel_type"
+													>
+														<option value="" disabled>Select type</option>
+														<option value="joborder">Job Order</option>
+														<option value="permanent">Permanent</option>
+														<option value="elective">Elective</option>
+														<option value="coterminous">Coterminous</option>
+													</select>
+													<div class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+														<svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+															<path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+														</svg>
+													</div>
+												</div>
 											</td>
 											<td class="text-center px-1 h-15">
 												<div class="relative w-fit">
 													<select 
+														required
 														class="block form-input-style appearance-none pr-8 cursor-pointer"
 														v-model="employment.dep_id"
 														id="department"
 													>
-														<option value=null disabled selected>Select Department</option>
-														<option v-for="d in personnelStore.allDepartments" :key="d.dep_id" :value="d.dep_id">
+														<option value="" disabled>Select Department</option>
+														<option v-for="d in personnelStore.allDepartments" :key="d.dep_id" :value="Number(d.dep_id)">
 															{{ d.dep_code }}
 														</option>
 													</select>
@@ -329,7 +342,7 @@
 												</div>
 											</td>
 											<td class="text-center px-1 h-15">
-												<input type="text" v-model="employment.job_position"
+												<input required type="text" v-model="employment.job_position"
 													placeholder="Input position..."
 													class="form-input-style w-full
 													scheme-dark
@@ -355,15 +368,15 @@
 										<td></td>
 										<td></td>
 										<td></td>
-										<td class="opacity-30 text-right pr-5">Add new appointment</td>
+										<td></td>
 										<td class="flex justify-center items-center h-15">
 											<button type="button"
 												@click="EmploymentHistory.push(
 													{
 														appointment_date:{start: '',end: ''},
-														job_type:null,
-														dep_id:null,
-														job_position:null
+														job_type:'',
+														dep_id:'',
+														job_position:''
 													}
 												)"
 												title="Add appointment date"
@@ -534,7 +547,9 @@
 			}
 		}catch (error) {
 			console.error('Server error message:', error)
-			router.back()
+			router.push({
+				name: 'home-personnel'
+			})
 		}
 	})
 
@@ -553,23 +568,23 @@
 					const currentuuid = response.data.personnel_uuid
 					try {
 						const empresponse = await Promise.all(
-							EmploymentHistory.value.forEach(fields => {
+							EmploymentHistory.value.map(fields => {
 								if (
 									fields.appointment_date.start === "" &&
 									fields.appointment_date.end === "" && 
-									fields.job_position === "" || fields.job_position === null &&
-									fields.job_type === "" || fields.job_type === null &&
+									(fields.job_position === "" || fields.job_position === null) &&
+									(fields.job_type === "" || fields.job_type === null) &&
 									fields.dep_id === null
 								) return
 
 								return API.createPersonnelEmploymentHistory(currentuuid, fields)
 							})
 						)
-						
-						if (empresponse.success){
+						if (empresponse.every(emp => emp.success)){
 							clearProfile();
 						}else{
 							feedbackmsg.value = 'Error! Failed To Create Employment History!'
+							showfeedback.value = true;
 							router.push({
 								name: 'edit-personnel',
 								params: { id: `${currentuuid}`}
@@ -779,11 +794,17 @@
 	const feedbackmsg = ref('Subject Profile Created Successfully!')
 	const handleParentAction = () => {
 		showfeedback.value = false
-		if (!ErrorOccured.value && EditMode.value){
-			router.push({
-				name: 'view-personnel',
-				params: { id: route.params.id }
-			})
+		if (!ErrorOccured.value){
+			if (EditMode.value){
+				router.push({
+					name: 'view-personnel',
+					params: { id: route.params.id }
+				})
+			}else{
+				router.push({
+					name: 'home-personnel'
+				})
+			}
 		}
 	};
 	const showfeedback = ref(false)

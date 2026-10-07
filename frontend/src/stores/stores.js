@@ -13,6 +13,7 @@ export const usePersonnelStore = defineStore('personnel', () => {
 
         if (allPersonnel.value.length === 0) {
             const result = await API.getPersonnelByUUID(personnel_uuid)
+
             selectedPersonnel.value = result.data
         }else {
             selectedPersonnel.value = allPersonnel.value.find(
@@ -50,7 +51,6 @@ export const usePersonnelStore = defineStore('personnel', () => {
 
         try {
             const result = await API.deletePersonnel(uuid)
-
             if (result.success) {
                 const indexpos = allPersonnel.value.findIndex(
                     person => person.personnel_uuid === uuid

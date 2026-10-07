@@ -165,7 +165,7 @@
     import * as API from '../../services/api.js'
 	import * as tools from '../../utils/format.js'
     import * as store from '../../stores/stores.js'
-    import * as Humanize from 'humanize-plus'
+    // import * as Humanize from 'humanize-plus'
     import { 
         TrashIcon
     } from '@heroicons/vue/24/outline';
