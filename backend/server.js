@@ -11,8 +11,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const fs = require('fs');
-const path = require('path');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const envPath = path.join(__dirname, '.env'); 
@@ -20,6 +18,9 @@ const PORT = process.env.PORT || 5000;
 export let clients = [];
 
 function runfrontend(app){
+    const frontendBuildPath = path.join(__dirname, '../frontend/dist');
+    const indexPath = path.join(frontendBuildPath, 'index.html');
+
     try {
         // 1. Check if path exists and is a valid directory
         const stats = fs.statSync(frontendBuildPath);
