@@ -21,10 +21,10 @@ echo 🚀 Starting Local Fullstack CI/CD Pipeline...
 :: STAGE 1: FETCH LATEST CODE
 :: ==========================================
 echo 📂 [1/4] Fetching latest changes from Git...
-git fetch origin main >> %LOG_FILE% 2>&1
+git fetch origin prod >> %LOG_FILE% 2>&1
 if %ERRORLEVEL% NEQ 0 (SET "FAILED_STAGE=Git Fetch" & goto :PIPELINE_FAILED)
 
-git pull origin main >> %LOG_FILE% 2>&1
+git pull origin prod >> %LOG_FILE% 2>&1
 if %ERRORLEVEL% NEQ 0 (SET "FAILED_STAGE=Git Pull" & goto :PIPELINE_FAILED)
 
 
