@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const envPath = path.join(__dirname, '.env'); 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 export let clients = [];
 
 function runfrontend(app){
@@ -49,7 +49,7 @@ async function init(){
     });
 
     // Uncomment if ready for production
-    // runfrontend(app)
+    runfrontend(app)
 
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`Backend Server running on port ${PORT}`);
