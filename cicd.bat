@@ -15,23 +15,34 @@ echo ============================================ >> %LOG_FILE%
 echo FULLSTACK CI/CD PIPELINE WITH PM2 STARTED AT %DATE% %TIME% >> %LOG_FILE%
 echo ============================================ >> %LOG_FILE%
 
-echo 🚀 Starting Local Fullstack CI/CD Pipeline...
+echo Starting Local Fullstack CI/CD Pipeline...
 
 :: ==========================================
 :: STAGE 1: FETCH LATEST CODE
 :: ==========================================
-echo 📂 [1/4] Fetching latest changes from Git...
-git fetch origin prod >> %LOG_FILE% 2>&1
-if %ERRORLEVEL% NEQ 0 (SET "FAILED_STAGE=Git Fetch" & goto :PIPELINE_FAILED)
+echo [1/4] Fetching latest changes from Git...
+git fetch origin >> %LOG_FILE% 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    SET "FAILED_STAGE=Git Fetch"
+    goto :PIPELINE_FAILED
+)
+
+git switch prod >> %LOG_FILE% 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    SET "FAILED_STAGE=Git Switch"
+    goto :PIPELINE_FAILED
+)
 
 git pull origin prod >> %LOG_FILE% 2>&1
-if %ERRORLEVEL% NEQ 0 (SET "FAILED_STAGE=Git Pull" & goto :PIPELINE_FAILED)
-
+if %ERRORLEVEL% NEQ 0 (
+    SET "FAILED_STAGE=Git Pull"
+    goto :PIPELINE_FAILED
+)
 
 :: ==========================================
 :: STAGE 2: BACKEND DEPENDENCIES
 :: ==========================================
-echo ⚙️ [2/4] Processing BACKEND...
+echo [2/4] Processing BACKEND...
 cd "%BACKEND_DIR%"
 
 call npm install >> ..\%LOG_FILE% 2>&1
@@ -47,7 +58,7 @@ cd ..
 :: ==========================================
 :: STAGE 3: FRONTEND BUILD (Direct to dist)
 :: ==========================================
-echo 💻 [3/4] Processing FRONTEND (Building directly into dist)...
+echo [3/4] Processing FRONTEND (Building directly into dist)...
 cd "%FRONTEND_DIR%"
 
 call npm install >> ..\%LOG_FILE% 2>&1
@@ -62,7 +73,7 @@ cd ..
 :: ==========================================
 :: STAGE 4: PM2 RELOAD / RESTART
 :: ==========================================
-echo 🔄 [4/4] Restarting backend process with PM2...
+echo [4/4] Restarting backend process with PM2...
 
 :: Option A: If your PM2 process is already running, 'reload' achieves zero-downtime
 call pm2 reload %PM2_APP_NAME% >> %LOG_FILE% 2>&1
@@ -79,9 +90,9 @@ if %ERRORLEVEL% NEQ 0 (SET "FAILED_STAGE=PM2 Process Restart" & goto :PIPELINE_F
 :: ==========================================
 :: SUCCESS
 :: ==========================================
-echo ✅ Fullstack CI/CD Pipeline completed successfully!
-echo ✅ Frontend built into direct-serve dist folder.
-echo ✅ PM2 backend application reloaded.
+echo [✓] Fullstack CI/CD Pipeline completed successfully!
+echo [✓] Frontend built into direct-serve dist folder.
+echo [✓] PM2 backend application reloaded.
 echo Pipeline Success: %DATE% %TIME% >> %LOG_FILE%
 exit /b 0
 
@@ -89,7 +100,7 @@ exit /b 0
 :: ERROR HANDLING
 :: ==========================================
 :PIPELINE_FAILED
-echo ❌ CI/CD Pipeline FAILED at stage: %FAILED_STAGE%
+echo [X] CI/CD Pipeline FAILED at stage: %FAILED_STAGE%
 echo See %LOG_FILE% for detailed errors.
 echo Pipeline Failure: %FAILED_STAGE% at %DATE% %TIME% >> %LOG_FILE%
 exit /b 1
