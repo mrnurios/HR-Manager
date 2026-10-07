@@ -348,7 +348,7 @@ router.patch('/employment/:id',async (req, res) => {
 export function daterangeStrtoArray(dateStr) {
     const strdates = []
     if (!!dateStr){
-        const match = dateStr.replace(/"/g, "").match(/\([^)]*\)/g);
+        const match = dateStr.replace(/"/g, "").match(/[\[(][^)\]]*[\])]/g);
         if (!match) return strdates;
 
         match.forEach(d =>{
