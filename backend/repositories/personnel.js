@@ -68,10 +68,25 @@ export async function getPersonnelByUUID(id) {
         FROM personnel p
         WHERE p.personnel_uuid = $1
     `
-    const result = await pool.query(sql,
-        [id]
-    )
-    return result.rows;
+    return await pool.query(sql,[id])
+}
+
+export async function createPersonnelEmploymentHistory(uuid,values) {
+    values.push(uuid)
+    const sql = `
+        INSERT INTO employment_history
+        (
+            appointment_date,
+            job_type,
+            dep_id,
+            job_position,
+            personnel_uuid
+        )
+        VALUES (${valuestostringcount(values)})
+        RETURNING *;
+    `
+
+    return pool.query(sql, values);
 }
 
 export async function createPersonnel(values) {
@@ -96,10 +111,7 @@ export async function createPersonnel(values) {
             purok,
             other_purok,
             other_address,
-            eligibility_level,
-            personnel_type,
-            dep_id,
-            appointment_dates
+            eligibility_level
         )
         VALUES (${valuestostringcount(values)})
         RETURNING *;

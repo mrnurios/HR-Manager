@@ -13,15 +13,12 @@ export const usePersonnelStore = defineStore('personnel', () => {
 
         if (allPersonnel.value.length === 0) {
             const result = await API.getPersonnelByUUID(personnel_uuid)
-
-            selectedPersonnel.value = result
-
-            return
-        }
-
-        selectedPersonnel.value = allPersonnel.value.find(
+            selectedPersonnel.value = result.data
+        }else {
+            selectedPersonnel.value = allPersonnel.value.find(
                 person => person.personnel_uuid === personnel_uuid
             ) || null
+        }
     }
 
     async function populatePersonnel(){
@@ -34,18 +31,6 @@ export const usePersonnelStore = defineStore('personnel', () => {
         allDepartments.value = [...response]
     }
 
-    // async function getDepartment(id){
-    //     if (allDepartments.value.length === 0){
-    //         await populateDepartments()
-    //     }
-
-    //     allDepartments.value.forEach(({dep_id,dep_code,dep_name})=>{
-
-    //     }) 
-
-    //     return 
-    // }
-
     const getDepartment = (id) => {
         if (allDepartments.value.length === 0){
             populateDepartments()
@@ -56,6 +41,31 @@ export const usePersonnelStore = defineStore('personnel', () => {
         )
     }
 
+    async function deletePersonnel(uuid) {
+        const confirmed = window.confirm(
+            'Are you sure you want to delete this personnel?'
+        )
+
+        if (!confirmed) return
+
+        try {
+            const result = await API.deletePersonnel(uuid)
+
+            if (result.success) {
+                const indexpos = allPersonnel.value.findIndex(
+                    person => person.personnel_uuid === uuid
+                )
+
+                if (indexpos >= 0) {
+                    allPersonnel.splice(indexpos, 1)
+                }
+            }
+        } catch (error) {
+            console.error('Database connection failed:', error)
+        }
+    }
+
+
     return {
         allDepartments,
         allPersonnel,
@@ -65,6 +75,7 @@ export const usePersonnelStore = defineStore('personnel', () => {
         populatePersonnel,
         populateDepartments,
         getDepartment,
+        deletePersonnel,
     }
 })
 

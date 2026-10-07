@@ -62,7 +62,7 @@
                 </div>
                 <div class="flex gap-2 md:gap-6 items-center">
                     <dt class="min-w-30 md:min-w-50 opacity-50 text-right">Birth Date:</dt>
-                    <dd class="font-semibold text-xs">{{ tools.datetoStr(new Date(personnelStore.selectedPersonnel?.birthdate)).replace('Invalid Date', '—')}}</dd>
+                    <dd class="font-semibold text-xs">{{ personnelStore.selectedPersonnel?.birthdate ? tools.datetoStr(new Date(personnelStore.selectedPersonnel?.birthdate)).replace('Invalid Date', '—') : '—'}}</dd>
                 </div>
                 <div class="flex gap-2 md:gap-6 items-center">
                     <dt class="min-w-30 md:min-w-50 opacity-50 text-right">Address:</dt>
@@ -134,7 +134,7 @@
                                         {{ index + 1 }}.
                                     </td>
                                     <td class="text-xs text-center px-1">
-                                        {{ tools.datetoStr(new Date(employment.appointment_date[0])) }}
+                                        {{ tools.datetoStr(new Date(employment.appointment_date[0])) === "Invalid Date" ?  '—' : tools.datetoStr(new Date(employment.appointment_date[0]))}}
                                     </td>
                                     <td class="text-xs text-center px-1">
                                         {{ tools.datetoStr(new Date(employment.appointment_date[1])) === "Invalid Date" ?  '—' : tools.datetoStr(new Date(employment.appointment_date[1])) }}

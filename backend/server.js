@@ -5,6 +5,7 @@ import personnelrouter from './routes/personnel-Routes.js';
 import passSliprouter from './routes/pass-slip-Routes.js';
 import departmentrouter from './routes/department-Routes.js';
 import cors from 'cors';
+import 'dotenv/config';
 
 import fs from 'node:fs';
 import path from 'node:path';

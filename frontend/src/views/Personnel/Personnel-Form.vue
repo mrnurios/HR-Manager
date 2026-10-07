@@ -310,20 +310,22 @@
 												</FormSelect>
 											</td>
 											<td class="text-center px-1 h-15">
-												<select 
-													class="block form-input-style appearance-none pr-8 cursor-pointer"
-													v-model="employment.dep_id"
-													id="department"
-												>
-													<option value=null disabled selected>Select Department</option>
-													<option v-for="d in personnelStore.allDepartments" :key="d.dep_id" :value="d.dep_id">
-														{{ d.dep_code }}
-													</option>
-												</select>
-												<div class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
-													<svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-														<path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-													</svg>
+												<div class="relative w-fit">
+													<select 
+														class="block form-input-style appearance-none pr-8 cursor-pointer"
+														v-model="employment.dep_id"
+														id="department"
+													>
+														<option value=null disabled selected>Select Department</option>
+														<option v-for="d in personnelStore.allDepartments" :key="d.dep_id" :value="d.dep_id">
+															{{ d.dep_code }}
+														</option>
+													</select>
+													<div class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+														<svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+															<path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+														</svg>
+													</div>
 												</div>
 											</td>
 											<td class="text-center px-1 h-15">
@@ -338,7 +340,7 @@
 											<td class="flex justify-center items-center h-15">
 												<button type="button" 
 													title="Delete"
-													@click="profile.employment_history.splice(index, 1)"
+													@click="EmploymentHistory.splice(index, 1)"
 													class="items-center bg-red-400 hover:bg-red-500 p-3 rounded-lg cursor-pointer">
 													<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
 														<path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
@@ -356,11 +358,12 @@
 										<td class="opacity-30 text-right pr-5">Add new appointment</td>
 										<td class="flex justify-center items-center h-15">
 											<button type="button"
-												@click="profile.employment_history.push(
+												@click="EmploymentHistory.push(
 													{
 														appointment_date:{start: '',end: ''},
-														job_type:0,
-														job_position:''
+														job_type:null,
+														dep_id:null,
+														job_position:null
 													}
 												)"
 												title="Add appointment date"
@@ -453,78 +456,85 @@
 	const personnelStore = usePersonnelStore()
 
 	onMounted(async () => {
-		if (personnelStore.allDepartments.length === 0){
-			await personnelStore.populateDepartments()
-		}
+		try {
 
-		if (route.name === 'edit-personnel' && route.params.id){
-			EditMode.value = true;
-			isSubmitting.value = true;
+			if (personnelStore.allDepartments.length === 0){
+				await personnelStore.populateDepartments()
+			}
 
-			await personnelStore.selectPersonnel(route.params.id);
+			if (route.name === 'edit-personnel' && route.params.id){
+				EditMode.value = true;
+				isSubmitting.value = true;
 
-			profileInfo.value = {...personnelStore.selectedPersonnel}
+				await personnelStore.selectPersonnel(route.params.id);
 
-			const date = new Date(profileInfo.value.birthdate);
-			const year = date.getFullYear();
-			const month = String(date.getMonth() + 1).padStart(2, '0');
-			const day = String(date.getDate()).padStart(2, '0');
-			const localBirthDate = `${year}-${month}-${day}`;
+				profileInfo.value = {...personnelStore.selectedPersonnel}
 
-			profile.value = {
-				fname: profileInfo.value.first_name,
-				mname: profileInfo.value.middle_name,
-				lname: profileInfo.value.last_name,
-				ext: profileInfo.value.ext_name,
-				selectedGender: profileInfo.value.sex,
-				selectedCivilStatus: profileInfo.value.civilstatus,
-				educationalattainment: profileInfo.value.educational_attainment,
-				birthdate: localBirthDate,
-				birthaddress: profileInfo.value.birthplace,
-				contact: profileInfo.value.contact_number,
-				isPWD: profileInfo.value.is_pwd,
-				PWDID: profileInfo.value.pwd_id,
-				isSoloParent: profileInfo.value.is_soloparent,
-				SoloParentID: profileInfo.value.solo_id,
-				selectedBarangay: profileInfo.value.barangay,
-				selectedPurok: profileInfo.value.purok,
-				specifyPurok: profileInfo.value.other_purok || '',
-				additionaladd: profileInfo.value.other_address,
-				eligibility: profileInfo.value.eligibility_level,
-				personnel_type: profileInfo.value.personnel_type,
-				dep_id: profileInfo.value.dep_id
-			};
+				let localBirthDate = ''
+				if (profileInfo.value.birthdate){
+					const date = new Date(profileInfo.value.birthdate);
+					const year = date.getFullYear();
+					const month = String(date.getMonth() + 1).padStart(2, '0');
+					const day = String(date.getDate()).padStart(2, '0');
+					localBirthDate = `${year}-${month}-${day}`;
+				}
 
-			originalEmploymentHistory.value = profileInfo.value.employment_history.map(history => {
-										const [start, end] = history.appointment_date
+				profile.value = {
+					fname: profileInfo.value.first_name,
+					mname: profileInfo.value.middle_name,
+					lname: profileInfo.value.last_name,
+					ext: profileInfo.value.ext_name,
+					selectedGender: profileInfo.value.sex,
+					selectedCivilStatus: profileInfo.value.civilstatus,
+					educationalattainment: profileInfo.value.educational_attainment,
+					birthdate: localBirthDate,
+					birthaddress: profileInfo.value.birthplace,
+					contact: profileInfo.value.contact_number,
+					isPWD: profileInfo.value.is_pwd,
+					PWDID: profileInfo.value.pwd_id,
+					isSoloParent: profileInfo.value.is_soloparent,
+					SoloParentID: profileInfo.value.solo_id,
+					selectedBarangay: profileInfo.value.barangay,
+					selectedPurok: profileInfo.value.purok,
+					specifyPurok: profileInfo.value.other_purok || '',
+					additionaladd: profileInfo.value.other_address,
+					eligibility: profileInfo.value.eligibility_level
+				};
 
-										return {
-											...history,
-											appointment_date: { start, end }
-										}
-									})
+				originalEmploymentHistory.value = profileInfo.value.employment_history.map(history => {
+											const [start, end] = history.appointment_date
 
-			EmploymentHistory.value = profileInfo.value.employment_history.map(history => {
-										const [start, end] = history.appointment_date
+											return {
+												...history,
+												appointment_date: { start, end }
+											}
+										})
 
-										return {
-											...history,
-											appointment_date: { start, end }
-										}
-									})
-			
+				EmploymentHistory.value = profileInfo.value.employment_history.map(history => {
+											const [start, end] = history.appointment_date
 
-			sameAddress.value = (profile.value.birthaddress === '')
+											return {
+												...history,
+												appointment_date: { start, end }
+											}
+										})
+				
 
-			originalEmploymentHistory.value = JSON.parse(
-				JSON.stringify(EmploymentHistory.value)
-			)
+				sameAddress.value = (profile.value.birthaddress === '')
 
-			originalProfile.value = JSON.parse(
-				JSON.stringify(toRaw(profile.value))
-			)
+				originalEmploymentHistory.value = JSON.parse(
+					JSON.stringify(EmploymentHistory.value)
+				)
 
-			isSubmitting.value = false;
+				originalProfile.value = JSON.parse(
+					JSON.stringify(toRaw(profile.value))
+				)
+
+				isSubmitting.value = false;
+			}
+		}catch (error) {
+			console.error('Server error message:', error)
+			router.back()
 		}
 	})
 
@@ -535,14 +545,49 @@
 		ErrorOccured.value = false;
 		
 		try {
+			// console.log(EmploymentHistory.value)
 			// No need to pass full URL or wrap payload in JSON.stringify
 			const response = await API.createPersonnel(profile.value);
 			if (response.success){
-				clearProfile();
-				feedbackmsg.value ='Profile Created Successfully!';
+				if (EmploymentHistory.value.length > 0) {
+					const currentuuid = response.data.personnel_uuid
+					try {
+						const empresponse = await Promise.all(
+							EmploymentHistory.value.forEach(fields => {
+								if (
+									fields.appointment_date.start === "" &&
+									fields.appointment_date.end === "" && 
+									fields.job_position === "" || fields.job_position === null &&
+									fields.job_type === "" || fields.job_type === null &&
+									fields.dep_id === null
+								) return
+
+								return API.createPersonnelEmploymentHistory(currentuuid, fields)
+							})
+						)
+						
+						if (empresponse.success){
+							clearProfile();
+						}else{
+							feedbackmsg.value = 'Error! Failed To Create Employment History!'
+							router.push({
+								name: 'edit-personnel',
+								params: { id: `${currentuuid}`}
+							})
+						}
+					}catch{
+						feedbackmsg.value = 'Error! Failed To Create Employment History!'
+						showfeedback.value = true;
+						router.push({
+							name: 'edit-personnel',
+							params: { id: `${currentuuid}`}
+						})
+					}
+				}
 			}else{
 				feedbackmsg.value = 'Error! Failed Creating Profile!'
 			}
+			feedbackmsg.value ='Profile Created Successfully!';
 		} catch (error) {
 			console.error('Server error message:', error)
 			feedbackmsg.value = `Error! Failed Creating Profile!\n${error.response?.data?.message}`
@@ -653,9 +698,7 @@
 		selectedPurok: null,
 		specifyPurok: null,
 		additionaladd: null,
-		eligibility: null,
-		personnel_type: null,
-		dep_id: null
+		eligibility: null
 	})
 
 	const clearProfile = () => {
@@ -680,9 +723,7 @@
 			selectedPurok: null,
 			specifyPurok: null,
 			additionaladd: null,
-			eligibility: null,
-			personnel_type: null,
-			dep_id: null
+			eligibility: null
 		};
 	};
 

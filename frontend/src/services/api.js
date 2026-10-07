@@ -23,6 +23,11 @@ export async function createPersonnel(data){
     return response.data;
 }
 
+export async function createPersonnelEmploymentHistory(uuid,data){
+    const response = await api.post(`/personnel/employment/create${uuid}`, data)
+    return response.data;
+}
+
 export async function createDepartment(data){
     const response = await api.post('/department/create', data)
     return response.data;
@@ -49,7 +54,7 @@ export async function getPersonnel() {
 
 export async function getPersonnelByUUID(uuid) {
     const response = await api.get(`/personnel/${uuid}`);
-    return response.data[0];
+    return response.data;
 }
 
 export async function searchPersonnel(query){

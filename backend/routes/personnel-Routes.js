@@ -83,15 +83,25 @@ router.get('/gettravelentriesandpassslips',async (req, res) => {
     }
 })
 
-router.get('/:id',async (req,res)=>{    
+router.get('/:id',async (req,res)=>{   
+    const { id } = req.params;
     try {
-        const { id } = req.params;
-        const data = await API.getPersonnelByUUID(id);
-        data[0].employment_history.forEach(e => {
-            e.appointment_date = daterangeStrtoArray(e.appointment_date)[0];
-        })
-        setActiveStatus(data[0]);
-        res.json(data);
+        const result = await API.getPersonnelByUUID(id);
+        if (result.rows.length > 0){
+            result.rows[0].employment_history.forEach(e => {
+                e.appointment_date = daterangeStrtoArray(e.appointment_date)[0];
+            })
+            setActiveStatus(result.rows[0]);
+            res.json({
+                success: true,
+                data: result.rows[0]
+            });
+        }else{
+            return res.status(400).json({
+                success: false,
+                message: `Personnel ${id} not found`
+            });
+        }
     } catch (err) {
         console.log(err)
         
@@ -122,27 +132,10 @@ router.post('/create',async (req, res) => {
 		selectedPurok,
 		specifyPurok,
 		additionaladd,
-		eligibility,
-		personnel_type,
-        dep_id,
-		appointmentdates
+		eligibility
     } = req.body;
 
     try {
-        const ranges = appointmentdates
-            .filter(({ start, end }) => start || end) // keep rows with at least one date
-            .map(({ start, end }) => {
-                if (start && end) {
-                return `[${start},${end}]`;
-                }
-
-                if (start) {
-                    return `[${start},)`; // open-ended
-                }
-
-                return `(,${end}]`; // open-beginning
-        });
-
         const values = [
             fname,
             mname,
@@ -162,17 +155,14 @@ router.post('/create',async (req, res) => {
             selectedPurok,
             specifyPurok,
             additionaladd,
-            eligibility,
-            personnel_type,
-            dep_id,
-            ranges
+            eligibility
         ];
 
         const result = await API.createPersonnel(values);
 
         res.json({
             success: true,
-            data: result
+            data: result.rows[0]
         });
     } catch (err) {
         console.log(err)
@@ -264,6 +254,59 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+router.post('/employment/create:id',async (req, res) => {
+    const { id } = req.params
+    const data = req.body
+
+    try {
+        if (
+            data.appointment_date.start === "" &&
+            data.appointment_date.end === "" && 
+            data.job_position === "" || data.job_position === null &&
+            data.job_type === "" || data.job_type === null &&  
+            data.dep_id === null
+        ) {
+            return res.status(404).json({
+                success: false,
+                message: 'Empty fields'
+            });
+        }
+
+        if (data.personnel_uuid && id !== data.personnel_uuid) {
+            return res.status(404).json({
+                success: false,
+                message: 'Conflicting personnel uuid'
+            });
+        }
+
+        const { start, end } = data.appointment_date
+
+        if (start && end) {
+            data.appointment_date = `[${start},${end}]`
+        } else if (start) {
+            data.appointment_date = `[${start},)`
+        } else if (end) {
+            data.appointment_date = `(,${end}]`
+        } else {
+            data.appointment_date = null
+        }
+        const values = Object.values(data);
+        const result = await API.createPersonnelEmploymentHistory(id,values);
+        result.rows[0].appointment_date = daterangeStrtoArray(result.rows[0].appointment_date)[0];
+        res.json({
+            success: true,
+            data: result.rows[0]
+        });
+    }catch (err) {
+        console.log(err)
+        
+        res.status(500).json({
+            success: false,
+            message: err.message
+        });
+    }
+})
+
 router.patch('/employment/:id',async (req, res) => {
     const { id } = req.params
     const data = req.body
@@ -305,7 +348,7 @@ router.patch('/employment/:id',async (req, res) => {
 export function daterangeStrtoArray(dateStr) {
     const strdates = []
     if (!!dateStr){
-        const match = dateStr.replace(/"/g, "").match(/\[[^\)]*\)/g);
+        const match = dateStr.replace(/"/g, "").match(/\([^)]*\)/g);
         if (!match) return strdates;
 
         match.forEach(d =>{
